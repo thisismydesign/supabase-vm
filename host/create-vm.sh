@@ -31,10 +31,11 @@ INCUS="sudo incus"
 TAILNET=$(tailscale status --json | jq -r .MagicDNSSuffix)
 PUBLIC_URL="https://$NAME.$TAILNET"
 
-$INCUS launch images:ubuntu/24.04/cloud "$NAME" --vm \
+$INCUS init images:ubuntu/24.04/cloud "$NAME" --vm \
   -c limits.cpu="$CPU" -c limits.memory="$MEM" -c boot.autostart=true \
-  -d root,size="$DISK" \
-  -c cloud-init.user-data="$(cat "$HERE/vm/cloud-init.yaml")"
+  -d root,size="$DISK"
+$INCUS config set "$NAME" cloud-init.user-data - < "$HERE/vm/cloud-init.yaml"
+$INCUS start "$NAME"
 echo "waiting for cloud-init"
 until $INCUS exec "$NAME" -- cloud-init status --wait >/dev/null 2>&1; do sleep 5; done
 $INCUS file push -r "$HERE/vm" "$NAME/opt/" && $INCUS exec "$NAME" -- mv /opt/vm /opt/supabase-vm
