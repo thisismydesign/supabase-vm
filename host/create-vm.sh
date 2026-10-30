@@ -3,7 +3,7 @@
 set -euo pipefail
 NAME=${1:?vm name, e.g. supabase-stash}
 SITE_URL=${2:?frontend url, e.g. https://stash.example.workers.dev}
-CPU=${3:-4}; MEM=${4:-4GiB}; DISK=${5:-60GiB}
+CPU=${3:-4}; MEM=${4:-4GiB}; DISK=${5:-30GiB}
 HERE=$(cd "$(dirname "$0")/.." && pwd)
 
 if ! command -v incus >/dev/null; then
