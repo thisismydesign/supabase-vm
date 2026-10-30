@@ -22,7 +22,7 @@ host/create-vm.sh supabase-<project> https://<frontend-url>   # creates the VM a
 incus exec supabase-<project> -- /opt/supabase-vm/expose.sh      # Funnel for the API, tailnet TCP for Postgres
 ```
 
-Keys and passwords live in `/opt/supabase/.env` inside the VM only. Read them with `incus exec supabase-<project> -- cat /opt/supabase/.env`.
+Keys and passwords live in `/opt/supabase/.env` inside the VM. Keep a copy as `.env.supabase-<project>` in this checkout; it is gitignored.
 
 ## Deploying a project to it
 
