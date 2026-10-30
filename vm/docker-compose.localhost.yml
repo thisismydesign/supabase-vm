@@ -1,0 +1,5 @@
+# Published ports bind to localhost only. Tailscale serve/funnel proxies to them from inside the VM.
+networks:
+  default:
+    driver_opts:
+      com.docker.network.bridge.host_binding_ipv4: "127.0.0.1"

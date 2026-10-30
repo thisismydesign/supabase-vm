@@ -19,6 +19,9 @@ set_env SITE_URL "$SITE_URL"
 set_env ADDITIONAL_REDIRECT_URLS "$SITE_URL"
 set_env STUDIO_DEFAULT_PROJECT "$NAME"
 set_env FUNCTIONS_VERIFY_JWT false
+set_env POOLER_TENANT_ID "${NAME#supabase-}"
+cp /opt/supabase-vm/docker-compose.localhost.yml .
+set_env COMPOSE_FILE docker-compose.yml:docker-compose.localhost.yml
 docker compose up -d
 tailscale up --ssh --hostname "$NAME" --timeout 10s 2>&1 | grep -E "https://|Success" || true
 echo "approve the login URL above, then run /opt/supabase-vm/expose.sh"
