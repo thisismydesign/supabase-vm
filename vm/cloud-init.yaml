@@ -1,8 +1,0 @@
-#cloud-config
-package_update: true
-packages: [curl, git, jq, openssl, ca-certificates]
-write_files:
-  - path: /etc/docker/daemon.json
-    content: '{"ip": "127.0.0.1"}'
-runcmd:
-  - "curl -fsSL https://tailscale.com/install.sh | sh"

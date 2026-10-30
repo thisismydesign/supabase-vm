@@ -3,6 +3,10 @@
 # Usage: setup.sh <name> <public-url> <site-url>
 set -euo pipefail
 NAME=$1; PUBLIC_URL=$2; SITE_URL=$3
+export DEBIAN_FRONTEND=noninteractive
+apt-get -qq update && apt-get -y -qq install curl git jq openssl ca-certificates
+mkdir -p /etc/docker && echo '{"ip": "127.0.0.1"}' > /etc/docker/daemon.json   # before Docker is installed: publish on localhost only
+command -v tailscale >/dev/null || curl -fsSL https://tailscale.com/install.sh | sh
 cd /opt
 if [ ! -d /opt/supabase ]; then
   curl -fsSL https://raw.githubusercontent.com/supabase/supabase/master/docker/setup.sh | sh -s -- -y --project-dir supabase
