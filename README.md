@@ -48,6 +48,18 @@ The SSH key is generated on the host as `~/.ssh/<project>-ci` and authorised for
 
 Manual fallback from the host: `host/deploy-functions.sh <vm> supabase/functions`, and `db push` against the same URL.
 
+## Footprint
+
+Defaults: 4 vCPU, 4 GiB, 60 GiB, settable per VM on `create-vm.sh`. Measured on supabase-stash, idle, 2026-10-31:
+
+| Resource | Use                                                                                  |
+| -------- | ------------------------------------------------------------------------------------ |
+| CPU      | Load ≈ 0.5 of 4 cores                                                                |
+| Memory   | ≈ 1 GiB for the containers, ≈ 1.7 GiB for all guest processes; the host sees the full limit once the guest's page cache fills it, and it does not shrink |
+| Disk     | 11 GiB after install, images included                                                |
+
+Memory is a hard cap: the guest drops cache, then kills a container, and the host is never affected. Change it live with `incus config set <vm> limits.memory=4GiB`.
+
 ## Operate
 
 | Task       | Command                                                                      |
