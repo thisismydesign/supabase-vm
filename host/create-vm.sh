@@ -34,7 +34,7 @@ PUBLIC_URL="https://$NAME.$TAILNET"
 $INCUS init images:ubuntu/24.04/cloud "$NAME" --vm \
   -c limits.cpu="$CPU" -c limits.memory="$MEM" -c boot.autostart=true \
   -d root,size="$DISK"
-$INCUS config set "$NAME" cloud-init.user-data - < "$HERE/vm/cloud-init.yaml"
+$INCUS config set "$NAME" cloud-init.user-data "$(cat "$HERE/vm/cloud-init.yaml")"
 $INCUS start "$NAME"
 echo "waiting for cloud-init"
 until $INCUS exec "$NAME" -- cloud-init status --wait >/dev/null 2>&1; do sleep 5; done
