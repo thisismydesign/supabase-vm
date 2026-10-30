@@ -23,5 +23,9 @@ set_env POOLER_TENANT_ID "${NAME#supabase-}"
 cp /opt/supabase-vm/docker-compose.localhost.yml .
 set_env COMPOSE_FILE docker-compose.yml:docker-compose.localhost.yml
 docker compose up -d
+# CI deploys functions over SSH as ubuntu: it needs sshd, Docker, and the functions dir.
+apt-get -y -qq install openssh-server
+usermod -aG docker ubuntu
+chown -R ubuntu:ubuntu volumes/functions
 tailscale up --ssh --hostname "$NAME" --timeout 10s 2>&1 | grep -E "https://|Success" || true
 echo "approve the login URL above, then run /opt/supabase-vm/expose.sh"

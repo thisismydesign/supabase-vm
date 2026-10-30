@@ -36,14 +36,17 @@ Keys and passwords live in `/opt/supabase/.env` inside the VM. Keep a copy as `.
 
 ## Deploying a project to it
 
-From the host, in the project checkout:
+From GitHub Actions, in the project's deploy job, after joining the tailnet with `tailscale/github-action` (OAuth client tagged `tag:ci`):
 
 ```sh
-supabase db push --db-url "postgresql://postgres.<tenant>:<password>@supabase-<project>:5432/postgres"
-~/workspace/thisismydesign/supabase-vm/host/deploy-functions.sh supabase-<project> supabase/functions
+supabase db push --db-url "$SUPABASE_DB_URL"        # postgresql://postgres.<tenant>:<password>@<vm>.<tailnet>.ts.net:5432/postgres
+rsync -a --delete --exclude main --exclude deno.jsonc supabase/functions/ ubuntu@<vm>.<tailnet>.ts.net:/opt/supabase/volumes/functions/
+ssh ubuntu@<vm>.<tailnet>.ts.net 'cd /opt/supabase && docker compose restart functions'
 ```
 
-The frontend gets `SUPABASE_URL=https://supabase-<project>.<tailnet>.ts.net` and the publishable key from `.env`.
+The SSH key is generated on the host as `~/.ssh/<project>-ci` and authorised for `ubuntu` in the VM; its private half is a repo secret. The frontend gets `SUPABASE_URL=https://<vm>.<tailnet>.ts.net` and `SUPABASE_PUBLISHABLE_KEY` from `.env`.
+
+Manual fallback from the host: `host/deploy-functions.sh <vm> supabase/functions`, and `db push` against the same URL.
 
 ## Operate
 
