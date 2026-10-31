@@ -44,7 +44,7 @@ rsync -a --delete --exclude main --exclude deno.jsonc supabase/functions/ ubuntu
 ssh ubuntu@<vm>.<tailnet>.ts.net 'cd /opt/supabase && docker compose restart functions'
 ```
 
-The SSH key is generated on the host as `~/.ssh/<project>-ci` and authorised for `ubuntu` in the VM; its private half is a repo secret. The frontend gets `SUPABASE_URL=https://<vm>.<tailnet>.ts.net` and `SUPABASE_PUBLISHABLE_KEY` from `.env`.
+`create-vm.sh` generates the SSH key on the host as `~/.ssh/<vm>-ci` and authorises it for `ubuntu` in the VM; its private half is a repo secret. The frontend gets `SUPABASE_URL=https://<vm>.<tailnet>.ts.net` and `SUPABASE_PUBLISHABLE_KEY` from `.env`.
 
 Manual fallback from the host: `host/deploy-functions.sh <vm> supabase/functions`, and `db push` against the same URL.
 

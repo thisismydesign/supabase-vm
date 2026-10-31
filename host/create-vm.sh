@@ -38,4 +38,7 @@ echo "waiting for the VM agent"
 until $INCUS exec "$NAME" -- true 2>/dev/null; do sleep 5; done
 $INCUS file push -r "$HERE/vm" "$NAME/opt/" && $INCUS exec "$NAME" -- mv /opt/vm /opt/supabase-vm
 $INCUS exec "$NAME" -- chmod +x /opt/supabase-vm/setup.sh /opt/supabase-vm/expose.sh
+# CI deploys over SSH with this key; its private half becomes the project's repo secret.
+[ -f ~/.ssh/"$NAME"-ci ] || ssh-keygen -q -t ed25519 -N "" -C "$NAME-ci" -f ~/.ssh/"$NAME"-ci
+$INCUS file push ~/.ssh/"$NAME"-ci.pub "$NAME/opt/supabase-vm/ci.pub"
 $INCUS exec "$NAME" -- /opt/supabase-vm/setup.sh "$NAME" "$PUBLIC_URL" "$SITE_URL"

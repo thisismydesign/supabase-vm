@@ -27,5 +27,7 @@ docker compose up -d
 apt-get -y -qq install openssh-server
 usermod -aG docker ubuntu
 chown -R ubuntu:ubuntu volumes/functions
+install -d -m 700 -o ubuntu -g ubuntu /home/ubuntu/.ssh
+install -m 600 -o ubuntu -g ubuntu /opt/supabase-vm/ci.pub /home/ubuntu/.ssh/authorized_keys
 tailscale up --ssh --hostname "$NAME" --timeout 10s 2>&1 | grep -E "https://|Success" || true
 echo "approve the login URL above, then run /opt/supabase-vm/expose.sh"
