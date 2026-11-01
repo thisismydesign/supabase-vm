@@ -10,8 +10,8 @@ Self-hosted Supabase, one VM per project, on a VPS. The VM is the boundary: what
 | ------------ | --------------------------------------------------------------- | --------------------------------------------------------------- |
 | Public API   | Funnel at `https://<vm>.<tailnet>.ts.net`                       | Cloudflare Tunnel at `https://<host>.<domain>`                  |
 | Studio       | Same URL, dashboard password                                    | Same URL, behind Cloudflare Access                              |
-| Deploy       | Tailscale GitHub Action joins CI to the tailnet; Postgres 5432  | Postgres as a TCP service behind Access; CI opens it by token   |
-| SSH          | `ssh ubuntu@<vm>` over Tailscale                                | `incus exec <vm> -- bash` on the host                           |
+| Deploy       | Tailscale GitHub Action joins CI to the tailnet; Postgres 5432, SSH 22 | Postgres as a TCP service behind Access; CI opens it by token   |
+| SSH          | `ssh ubuntu@<vm>` over Tailscale, OpenSSH with the CI key       | `incus exec <vm> -- bash` on the host                           |
 | Depends on   | Tailscale relays and account; disable key expiry per device    | Cloudflare and the domain                                       |
 
 Tailscale is what the scripts set up today. Swap to the domain once it exists: install cloudflared in the VM, route the hostname to `localhost:8000`, set `SUPABASE_PUBLIC_URL` and `API_EXTERNAL_URL` in `.env`.
@@ -39,10 +39,12 @@ Keys and passwords live in `/opt/supabase/.env` inside the VM. Keep a copy as `.
 From GitHub Actions, in the project's deploy job, after joining the tailnet with `tailscale/github-action` (OAuth client tagged `tag:ci`):
 
 ```sh
-supabase db push --db-url "$SUPABASE_DB_URL"        # postgresql://postgres.<tenant>:<password>@<vm>.<tailnet>.ts.net:5432/postgres
-rsync -a --delete --exclude main --exclude deno.jsonc supabase/functions/ ubuntu@<vm>.<tailnet>.ts.net:/opt/supabase/volumes/functions/
+supabase db push --db-url "$SUPABASE_DB_URL"        # postgresql://postgres.<tenant>:<password>@<vm>.<tailnet>.ts.net:5432/postgres?sslmode=disable
+tar -cf - -C supabase/functions . | ssh ubuntu@<vm>.<tailnet>.ts.net 'cd /opt/supabase/volumes/functions && find . -mindepth 1 -maxdepth 1 ! -name main -exec rm -rf {} + && tar -xf -'
 ssh ubuntu@<vm>.<tailnet>.ts.net 'cd /opt/supabase && docker compose restart functions'
 ```
+
+`sslmode=disable` because the pooler speaks no TLS; the tailnet encrypts. `tar` over `ssh` because the image has no rsync. The tailnet policy MUST let `tag:ci` reach the VM on 22 and 5432; Tailscale SSH is off in the VM, so OpenSSH and `authorized_keys` decide, not the SSH policy.
 
 `create-vm.sh` generates the SSH key on the host as `~/.ssh/<vm>-ci` and authorises it for `ubuntu` in the VM; its private half is a repo secret. The frontend gets `SUPABASE_URL=https://<vm>.<tailnet>.ts.net` and `SUPABASE_PUBLISHABLE_KEY` from `.env`.
 
