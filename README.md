@@ -27,10 +27,12 @@ git clone https://github.com/thisismydesign/supabase-vm ~/workspace/thisismydesi
 ## Per project
 
 ```sh
-host/create-vm.sh supabase-<project> https://<frontend-url>   # creates the VM and starts the stack
+host/create-vm.sh supabase-<project> https://<frontend-url>   # creates the VM and starts the stack, latest Supabase release
 # approve the printed Tailscale login URL, then:
 incus exec supabase-<project> -- /opt/supabase-vm/expose.sh      # Funnel for the API, tailnet TCP for Postgres
 ```
+
+`SUPABASE_REF=self-hosted/v0.8.3 host/create-vm.sh ...` pins a [release](https://github.com/supabase/supabase/tags); the VM records its version in `/opt/supabase/.supabase-version`.
 
 Keys and passwords live in `/opt/supabase/.env` inside the VM. Keep a copy as `.env.supabase-<project>` in this checkout; it is gitignored.
 
@@ -70,5 +72,5 @@ Memory is a hard cap: the guest drops cache, then kills a container, and the hos
 | Studio     | `https://supabase-<project>.<tailnet>.ts.net`, dashboard user and password from `.env`  |
 | Snapshot   | `incus snapshot create supabase-<project> before-<change>`                   |
 | Roll back  | `incus snapshot restore supabase-<project> before-<change>`                  |
-| Upgrade    | `incus exec supabase-<project> -- bash -c 'cd /opt/supabase && sh update.sh && docker image prune -af'` |
+| Upgrade    | `incus exec supabase-<project> -- bash -c 'cd /opt/supabase && sh update.sh && docker image prune -af'`; add `--to self-hosted/vX.Y.Z` for a specific release |
 | Logs       | `incus exec supabase-<project> -- docker compose -f /opt/supabase/docker-compose.yml logs -f` |

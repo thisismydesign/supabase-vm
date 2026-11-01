@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Create a Supabase VM on this host. Usage: host/create-vm.sh <name> <frontend-url> [cpu] [memory] [disk]
+# SUPABASE_REF=self-hosted/v0.8.3 pins the bundle version; the default is the latest release.
 set -euo pipefail
 NAME=${1:?vm name, e.g. supabase-stash}
 SITE_URL=${2:?frontend url, e.g. https://stash.example.workers.dev}
-CPU=${3:-4}; MEM=${4:-4GiB}; DISK=${5:-30GiB}
+CPU=${3:-4}; MEM=${4:-4GiB}; DISK=${5:-30GiB}; REF=${SUPABASE_REF:-}
 HERE=$(cd "$(dirname "$0")/.." && pwd)
 
 if ! command -v incus >/dev/null; then
@@ -41,4 +42,4 @@ $INCUS exec "$NAME" -- chmod +x /opt/supabase-vm/setup.sh /opt/supabase-vm/expos
 # CI deploys over SSH with this key; its private half becomes the project's repo secret.
 [ -f ~/.ssh/"$NAME"-ci ] || ssh-keygen -q -t ed25519 -N "" -C "$NAME-ci" -f ~/.ssh/"$NAME"-ci
 $INCUS file push ~/.ssh/"$NAME"-ci.pub "$NAME/opt/supabase-vm/ci.pub"
-$INCUS exec "$NAME" -- /opt/supabase-vm/setup.sh "$NAME" "$PUBLIC_URL" "$SITE_URL"
+$INCUS exec "$NAME" -- /opt/supabase-vm/setup.sh "$NAME" "$PUBLIC_URL" "$SITE_URL" "$REF"
