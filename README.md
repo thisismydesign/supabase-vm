@@ -11,7 +11,7 @@ Self-hosted Supabase, one VM per project, on a VPS. The VM is the boundary: what
 | Public API   | Funnel at `https://<vm>.<tailnet>.ts.net`                       | Cloudflare Tunnel at `https://<host>.<domain>`                  |
 | Studio       | Same URL, dashboard password                                    | Same URL, behind Cloudflare Access                              |
 | Deploy       | Tailscale GitHub Action joins CI to the tailnet; Postgres 5432, SSH 22 | Postgres as a TCP service behind Access; CI opens it by token   |
-| SSH          | `ssh ubuntu@<vm>` over Tailscale, OpenSSH with the CI key       | `incus exec <vm> -- bash` on the host                           |
+| SSH          | `ssh -i ~/.ssh/<vm>-ci ubuntu@<vm>` over Tailscale              | `incus exec <vm> -- bash` on the host                           |
 | Depends on   | Tailscale relays and account; disable key expiry per device    | Cloudflare and the domain                                       |
 
 Tailscale is what the scripts set up today. Swap to the domain once it exists: install cloudflared in the VM, route the hostname to `localhost:8000`, set `SUPABASE_PUBLIC_URL` and `API_EXTERNAL_URL` in `.env`.
@@ -66,7 +66,7 @@ Memory is a hard cap: the guest drops cache, then kills a container, and the hos
 
 | Task       | Command                                                                      |
 | ---------- | ---------------------------------------------------------------------------- |
-| Shell      | `incus exec supabase-<project> -- bash` on the host, or `ssh ubuntu@supabase-<project>` over Tailscale |
+| Shell      | `incus exec supabase-<project> -- bash` on the host                          |
 | Studio     | `https://supabase-<project>.<tailnet>.ts.net`, dashboard user and password from `.env`  |
 | Snapshot   | `incus snapshot create supabase-<project> before-<change>`                   |
 | Roll back  | `incus snapshot restore supabase-<project> before-<change>`                  |
