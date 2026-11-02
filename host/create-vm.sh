@@ -15,11 +15,13 @@ if ! command -v incus >/dev/null; then
   sudo ufw allow in on incusbr0 >/dev/null
   sudo ufw route allow in on incusbr0 >/dev/null
   sudo ufw route allow out on incusbr0 >/dev/null
-  sudo tee -a /etc/ufw/after.rules >/dev/null <<'RULES'
+  # Each declaration empties DOCKER-USER: declare it only when no earlier block does.
+  sudo grep -q '^:DOCKER-USER ' /etc/ufw/after.rules && DECLARE= || DECLARE=':DOCKER-USER - [0:0]'
+  sudo tee -a /etc/ufw/after.rules >/dev/null <<RULES
 
 # BEGIN incus: VM bridge traffic bypasses Docker's FORWARD drop
 *filter
-:DOCKER-USER - [0:0]
+$DECLARE
 -I DOCKER-USER -i incusbr0 -j ACCEPT
 -I DOCKER-USER -o incusbr0 -j ACCEPT
 COMMIT
