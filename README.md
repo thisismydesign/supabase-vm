@@ -24,6 +24,8 @@ git clone https://github.com/thisismydesign/supabase-vm ~/workspace/thisismydesi
 
 `host/create-vm.sh` installs incus and the firewall rules on first use.
 
+The host MUST have no public ports, and its ufw MUST drop new connections from the public interface in `DOCKER-USER`. `/etc/ufw/after.rules` MUST declare `DOCKER-USER` once; `create-vm.sh` declares it only when no earlier block does. Check with `sudo iptables -L DOCKER-USER -n`.
+
 ## Per project
 
 ```sh
