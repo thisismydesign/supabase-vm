@@ -11,7 +11,7 @@ Self-hosted Supabase, one VM per project, on a VPS. The VM is the boundary betwe
 
 ```
 host/                    run on the VPS: create a VM, save its state, deploy functions into it
-vm/                      pushed into the VM: bootstrap, Supabase setup, exposure, compose override
+vm/                      pushed into the VM: bootstrap, Supabase setup, service selection, exposure, compose override
 state/<vm>/              saved identity of a VM (.env, Tailscale or tunnel credentials, SSH host keys); gitignored
 .env.<vm>                local copy of a VM's secrets; gitignored
 ```

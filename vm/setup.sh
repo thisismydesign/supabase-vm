@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Inside the VM: install the Supabase self-hosting bundle, configure it, start it, install the proxy its public URL calls for.
-# Usage: setup.sh <name> <public-url> <site-url> [bundle-ref]
+# Usage: setup.sh <name> <public-url> <site-url> [bundle-ref] [excluded-services]
 set -euo pipefail
-NAME=$1; PUBLIC_URL=$2; SITE_URL=$3; REF=${4:-}
+NAME=$1; PUBLIC_URL=$2; SITE_URL=$3; REF=${4:-}; EXCLUDED=${5:-}
 export DEBIAN_FRONTEND=noninteractive
 apt-get -qq update && apt-get -y -qq install curl git jq openssl ca-certificates
 mkdir -p /etc/docker && echo '{"ip": "127.0.0.1"}' > /etc/docker/daemon.json   # before Docker is installed: publish on localhost only
@@ -22,7 +22,7 @@ set_env FUNCTIONS_VERIFY_JWT false
 set_env POOLER_TENANT_ID "${NAME#supabase-}"
 cp /opt/supabase-vm/docker-compose.localhost.yml .
 set_env COMPOSE_FILE docker-compose.yml:docker-compose.localhost.yml
-docker compose up -d
+/opt/supabase-vm/services.sh "$EXCLUDED"
 # CI deploys functions over SSH as ubuntu: it needs sshd, Docker, and the functions dir.
 apt-get -y -qq install openssh-server
 usermod -aG docker ubuntu
