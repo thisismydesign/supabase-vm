@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Create a Supabase VM on this host. Usage: host/create-vm.sh <name> <frontend-url> [cpu] [memory] [disk]
 # SUPABASE_REF=self-hosted/v0.8.3 pins the bundle version; the default is the latest release.
+# SUPABASE_DOMAIN=example.com serves the VM at https://<name>.example.com through a Cloudflare Tunnel; the default is Tailscale.
 set -euo pipefail
 NAME=${1:?vm name, e.g. supabase-stash}
 SITE_URL=${2:?frontend url, e.g. https://stash.example.workers.dev}
-CPU=${3:-4}; MEM=${4:-4GiB}; DISK=${5:-30GiB}; REF=${SUPABASE_REF:-}
+CPU=${3:-4}; MEM=${4:-4GiB}; DISK=${5:-30GiB}; REF=${SUPABASE_REF:-}; DOMAIN=${SUPABASE_DOMAIN:-}
 HERE=$(cd "$(dirname "$0")/.." && pwd)
 
 if ! command -v incus >/dev/null; then
@@ -31,8 +32,7 @@ RULES
 fi
 
 INCUS="sudo incus"
-TAILNET=$(tailscale status --json | jq -r .MagicDNSSuffix)
-PUBLIC_URL="https://$NAME.$TAILNET"
+PUBLIC_URL="https://$NAME.${DOMAIN:-$(tailscale status --json | jq -r .MagicDNSSuffix)}"
 
 $INCUS launch images:ubuntu/24.04/cloud "$NAME" --vm \
   -c limits.cpu="$CPU" -c limits.memory="$MEM" -c boot.autostart=true \

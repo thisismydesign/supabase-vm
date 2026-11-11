@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-# Inside the VM: install the Supabase self-hosting bundle, configure it, start it, begin the Tailscale login.
+# Inside the VM: install the Supabase self-hosting bundle, configure it, start it, install the proxy its public URL calls for.
 # Usage: setup.sh <name> <public-url> <site-url> [bundle-ref]
 set -euo pipefail
 NAME=$1; PUBLIC_URL=$2; SITE_URL=$3; REF=${4:-}
 export DEBIAN_FRONTEND=noninteractive
 apt-get -qq update && apt-get -y -qq install curl git jq openssl ca-certificates
 mkdir -p /etc/docker && echo '{"ip": "127.0.0.1"}' > /etc/docker/daemon.json   # before Docker is installed: publish on localhost only
-command -v tailscale >/dev/null || curl -fsSL https://tailscale.com/install.sh | sh
 cd /opt
 if [ ! -d /opt/supabase ]; then
   # Latest self-hosted/v* tag unless a ref is given; the version lands in /opt/supabase/.supabase-version.
@@ -30,6 +29,16 @@ usermod -aG docker ubuntu
 chown -R ubuntu:ubuntu volumes/functions
 install -d -m 700 -o ubuntu -g ubuntu /home/ubuntu/.ssh
 install -m 600 -o ubuntu -g ubuntu /opt/supabase-vm/ci.pub /home/ubuntu/.ssh/authorized_keys
-# Not Tailscale SSH: it takes over port 22 and the tailnet's SSH policy, not authorized_keys, would decide who gets in.
-tailscale up --hostname "$NAME" --timeout 10s 2>&1 | grep -E "https://|Success" || true
-echo "approve the login URL above, then run /opt/supabase-vm/expose.sh"
+if [[ $PUBLIC_URL == *.ts.net ]]; then
+  command -v tailscale >/dev/null || curl -fsSL https://tailscale.com/install.sh | sh
+  # Not Tailscale SSH: it takes over port 22 and the tailnet's SSH policy, not authorized_keys, would decide who gets in.
+  tailscale up --hostname "$NAME" --timeout 10s 2>&1 | grep -E "https://|Success" || true
+  echo "approve the login URL above, then run /opt/supabase-vm/expose.sh"
+else
+  if ! command -v cloudflared >/dev/null; then
+    # The release package, not Cloudflare's apt repository: on 2026-11-11 its Release file was signed by a key missing from the published keyring.
+    curl -fsSL -o /tmp/cloudflared.deb "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-$(dpkg --print-architecture).deb"
+    apt-get -y -qq install /tmp/cloudflared.deb
+  fi
+  echo "run /opt/supabase-vm/expose.sh and approve the login URL it prints"
+fi
