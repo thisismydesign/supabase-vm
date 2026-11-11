@@ -49,6 +49,18 @@ The zone SHOULD bypass cache for the API hostname: Cloudflare caches image exten
 
 `SUPABASE_REF=self-hosted/v0.8.3 host/create-vm.sh ...` pins a [release](https://github.com/supabase/supabase/tags); the VM records its version in `/opt/supabase/.supabase-version`.
 
+`SUPABASE_EXCLUDE=realtime,imgproxy host/create-vm.sh ...` leaves services of the bundle off; the default runs all of them. Names are the bundle's Compose services. `services.sh` changes the set on a running VM (see Operate); an excluded service keeps its data.
+
+| Service     | Without it                                                |
+| ----------- | --------------------------------------------------------- |
+| `studio`    | No dashboard at the public URL; `meta` serves only Studio |
+| `realtime`  | No Realtime                                               |
+| `storage`   | No Storage; `imgproxy` serves only Storage                |
+| `imgproxy`  | Storage without image transformations                     |
+| `functions` | No Edge Functions                                         |
+
+`supavisor` MUST stay: deploys reach Postgres through it.
+
 Keys and passwords live in `/opt/supabase/.env` inside the VM. Keep a copy as `.env.supabase-<project>` in this checkout; it is gitignored.
 
 ## Deploying a project to it
@@ -81,7 +93,7 @@ Manual fallback from the host: `host/deploy-functions.sh <vm> supabase/functions
 
 ## Footprint
 
-Defaults: 4 vCPU, 4 GiB, 30 GiB, settable per VM on `create-vm.sh`. Measured on an idle VM, 2026-10-31:
+Defaults: 4 vCPU, 4 GiB, 30 GiB, settable per VM on `create-vm.sh`. Measured on an idle VM running every service, 2026-10-31:
 
 | Resource | Use                                                                                  |
 | -------- | ------------------------------------------------------------------------------------ |
@@ -100,4 +112,5 @@ Memory is a hard cap: the guest drops cache, then kills a container, and the hos
 | Snapshot   | `incus snapshot create supabase-<project> before-<change>`                   |
 | Roll back  | `incus snapshot restore supabase-<project> before-<change>`                  |
 | Upgrade    | `incus exec supabase-<project> -- bash -c 'cd /opt/supabase && sh update.sh && docker image prune -af'`; add `--to self-hosted/vX.Y.Z` for a specific release |
+| Services   | `incus exec supabase-<project> -- /opt/supabase-vm/services.sh realtime,imgproxy` excludes those; no argument runs them all |
 | Logs       | `incus exec supabase-<project> -- docker compose -f /opt/supabase/docker-compose.yml logs -f` |
